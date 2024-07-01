@@ -1,14 +1,21 @@
+import pyperclip
+import time
 from pynput import keyboard
 import os
 import platform
 from datetime import datetime
-
+import threading
+import psutil
 
 # List of predefined words to detect
 predefined_words = ['shutdownnow', 'poweroff', 'terminate']
 
-# Buffer to store typed characters
+# Buffer to store typed characters and word count
 typed_buffer = []
+word_count = 0
+
+# List of applications to monitor
+monitored_apps = ['Facebook.exe', 'Messenger.exe']
 
 # Function to simulate shutdown (for testing)
 def shutdown_computer():
@@ -26,7 +33,11 @@ def on_word_detected(word):
 
 # Function to handle key presses
 def on_press(key):
-    print(f"Key pressed: {key}")  # Debug print
+    global word_count
+
+    # Debug print
+    print(f"Key pressed: {key}")
+
     try:
         if hasattr(key, 'char') and key.char.isalnum():  # Only consider alphanumeric characters
             typed_buffer.append(key.char)
@@ -36,21 +47,74 @@ def on_press(key):
         print(f"Special key pressed: {key}")  # Debug print
         typed_buffer.append(' ')
 
+    # Count words based on spaces
+    if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
+        word_count += 1
+
     # Check if buffer ends with any predefined word
     current_input = ''.join(typed_buffer).split()
     print(f"Current input buffer: {current_input}")  # Debug print
-    for word in predefined_words:
-        if word in current_input:
-            on_word_detected(word)
-            # Clear the buffer to prevent multiple detections
-            typed_buffer.clear()
+
+    # Check if we reached 150 words without a trigger
+    if word_count >= 150:
+        print("Reached 150 words without trigger. Clearing buffer.")
+        typed_buffer.clear()
+        word_count = 0
+    else:
+        for word in predefined_words:
+            if word in current_input:
+                on_word_detected(word)
+                typed_buffer.clear()
+                word_count = 0
+                break
 
 # Function to handle key releases (not used here)
 def on_release(key):
     pass
 
-# Setting up the listener
+# Function to monitor clipboard for predefined words
+def monitor_clipboard():
+    previous_text = ""
+    while True:
+        current_text = pyperclip.paste()
+        if current_text != previous_text:
+            previous_text = current_text
+            print(f"Clipboard content: {current_text}")  # Debug print
+            current_input = current_text.split()
+            for word in current_input:
+                typed_buffer.append(word)
+                typed_buffer.append(' ')
+                for predefined_word in predefined_words:
+                    if predefined_word in word:
+                        on_word_detected(predefined_word)
+            print(f"Updated input buffer: {''.join(typed_buffer).split()}")  # Debug print
+        time.sleep(1)  # Check the clipboard every second
+
+# Function to monitor running applications
+def monitor_applications():
+    while True:
+        running_apps = [p.info['name'] for p in psutil.process_iter(['name'])]
+        print(f"Running applications: {running_apps}")  # Debug print
+        for app in monitored_apps:
+            if app in running_apps:
+                on_word_detected(app)
+        time.sleep(1)  # Check running applications every second
+
+# Start application monitoring in a separate thread
+app_monitor_thread = threading.Thread(target=monitor_applications)
+app_monitor_thread.start()
+
+# Start clipboard monitoring in a separate thread
+clipboard_monitor_thread = threading.Thread(target=monitor_clipboard)
+clipboard_monitor_thread.start()
+
+# Setting up the keyboard listener
 print("Starting listener...")  # Debug print
-with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+listener.start()
+
+# Main loop to keep the script running
+try:
     listener.join()
-print("Listener stopped.")  # Debug print
+except KeyboardInterrupt:
+    print("Shutting down...")
