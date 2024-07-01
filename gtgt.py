@@ -14,8 +14,8 @@ predefined_words = ['shutdownnow', 'poweroff', 'terminate']
 typed_buffer = []
 word_count = 0
 
-# List of applications to monitor
-monitored_apps = ['Facebook.exe', 'Messenger.exe']
+# List of monitored applications (without '.exe')
+monitored_apps = ['Code', 'chrome', 'Spotify', 'slack', 'msedge']
 
 # Function to simulate shutdown (for testing)
 def shutdown_computer():
@@ -91,19 +91,10 @@ def monitor_clipboard():
                     word_count = 0
                     break
             else:
-                
-                for word in current_input:
-                    typed_buffer.append(word)
-                    typed_buffer.append(' ')
+                # Add clipboard words to the buffer and count them
+                typed_buffer.extend(current_input)
                 word_count += len(current_input)
-                # Check if we reached 150 words without a trigger
-                if word_count >= 150:
-                    print("Reached 150 words without trigger. Clearing buffer.")
-                    typed_buffer.clear()
-                    word_count = 0
-            print(f"Updated input buffer: {''.join(typed_buffer).split()}")  # Debug print
-            print(word_count)
-        time.sleep(1)  # Check the clipboard every second
+        time.sleep(1)  # Check clipboard every second
 
 # Function to monitor running applications
 def monitor_applications():
@@ -126,9 +117,3 @@ clipboard_monitor_thread.start()
 print("Starting listener...")  # Debug print
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
-
-# Main loop to keep the script running
-try:
-    listener.join()
-except KeyboardInterrupt:
-    print("Shutting down...")
