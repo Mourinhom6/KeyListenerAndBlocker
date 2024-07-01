@@ -1,7 +1,6 @@
 from pynput import keyboard
 import os
 import platform
-import subprocess
 
 # List of predefined words to detect
 predefined_words = ['shutdownnow', 'poweroff', 'terminate']
@@ -9,14 +8,11 @@ predefined_words = ['shutdownnow', 'poweroff', 'terminate']
 # Buffer to store typed characters
 typed_buffer = []
 
-# Function to shut down the computer
+# Function to simulate shutdown (for testing)
 def shutdown_computer():
-    print("Hello there!")
-    # system = platform.system()
-    # if system == 'Windows':
-    #     os.system('shutdown /s /t 1')
-    # elif system == 'Linux' or system == 'Darwin':  # Darwin is macOS
-    #     subprocess.run(['sudo', 'shutdown', '-h', 'now'])
+    with open('shutdown_test.log', 'a') as file:
+        file.write('Shutdown command detected and simulated.\n')
+    print("Shutdown command detected and simulated.")
 
 # Function to be called when a predefined word is detected
 def on_word_detected(word):
