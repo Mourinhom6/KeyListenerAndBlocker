@@ -54,6 +54,7 @@ def on_press(key):
     # Check if buffer ends with any predefined word
     current_input = ''.join(typed_buffer).split()
     print(f"Current input buffer: {current_input}")  # Debug print
+    print(word_count)
 
     # Check if we reached 150 words without a trigger
     if word_count >= 150:
@@ -74,27 +75,39 @@ def on_release(key):
 
 # Function to monitor clipboard for predefined words
 def monitor_clipboard():
+    global word_count
     previous_text = ""
     while True:
         current_text = pyperclip.paste()
         if current_text != previous_text:
             previous_text = current_text
             print(f"Clipboard content: {current_text}")  # Debug print
+            print(word_count)
             current_input = current_text.split()
             for word in current_input:
-                typed_buffer.append(word)
-                typed_buffer.append(' ')
-                for predefined_word in predefined_words:
-                    if predefined_word in word:
-                        on_word_detected(predefined_word)
+                if word in predefined_words:
+                    on_word_detected(word)
+                    typed_buffer.clear()
+                    word_count = 0
+                    break
+            else:
+                for word in current_input:
+                    typed_buffer.append(word)
+                    typed_buffer.append(' ')
+                word_count += len(current_input)
+                # Check if we reached 150 words without a trigger
+                if word_count >= 150:
+                    print("Reached 150 words without trigger. Clearing buffer.")
+                    typed_buffer.clear()
+                    word_count = 0
             print(f"Updated input buffer: {''.join(typed_buffer).split()}")  # Debug print
+            print(word_count)
         time.sleep(1)  # Check the clipboard every second
 
 # Function to monitor running applications
 def monitor_applications():
     while True:
         running_apps = [p.info['name'] for p in psutil.process_iter(['name'])]
-        print(f"Running applications: {running_apps}")  # Debug print
         for app in monitored_apps:
             if app in running_apps:
                 on_word_detected(app)
