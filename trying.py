@@ -37,7 +37,6 @@ def on_press(key):
 
     # Debug print
     print(f"Key pressed: {key}")
-
     try:
         if hasattr(key, 'char') and key.char.isalnum():  # Only consider alphanumeric characters
             typed_buffer.append(key.char)
@@ -46,7 +45,7 @@ def on_press(key):
     except AttributeError:
         print(f"Special key pressed: {key}")  # Debug print
         typed_buffer.append(' ')
-        
+
     # Count words based on spaces
     if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
         word_count += 1
@@ -55,7 +54,6 @@ def on_press(key):
     current_input = ''.join(typed_buffer).split()
     print(f"Current input buffer: {current_input}")  # Debug print
     print(word_count)
-
     # Check if we reached 150 words without a trigger
     if word_count >= 150:
         print("Reached 150 words without trigger. Clearing buffer.")
@@ -91,7 +89,10 @@ def monitor_clipboard():
                     word_count = 0
                     break
             else:
-                
+                # Add clipboard words to the buffer and count them
+                typed_buffer.extend(current_input)
+                word_count += len(current_input)
+
                 for word in current_input:
                     typed_buffer.append(word)
                     typed_buffer.append(' ')
@@ -113,7 +114,6 @@ def monitor_applications():
             if app in running_apps:
                 on_word_detected(app)
         time.sleep(1)  # Check running applications every second
-
 # Start application monitoring in a separate thread
 app_monitor_thread = threading.Thread(target=monitor_applications)
 app_monitor_thread.start()

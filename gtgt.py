@@ -14,8 +14,8 @@ predefined_words = ['shutdownnow', 'poweroff', 'terminate']
 typed_buffer = []
 word_count = 0
 
-# List of monitored applications (without '.exe')
-monitored_apps = ['Code', 'chrome', 'Spotify', 'slack', 'msedge']
+# List of applications to monitor (without '.exe')
+monitored_apps = ['Facebook', 'Messenger']
 
 # Function to simulate shutdown (for testing)
 def shutdown_computer():
@@ -37,7 +37,6 @@ def on_press(key):
 
     # Debug print
     print(f"Key pressed: {key}")
-
     try:
         if hasattr(key, 'char') and key.char.isalnum():  # Only consider alphanumeric characters
             typed_buffer.append(key.char)
@@ -46,7 +45,7 @@ def on_press(key):
     except AttributeError:
         print(f"Special key pressed: {key}")  # Debug print
         typed_buffer.append(' ')
-        
+
     # Count words based on spaces
     if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
         word_count += 1
@@ -54,24 +53,18 @@ def on_press(key):
     # Check if buffer ends with any predefined word
     current_input = ''.join(typed_buffer).split()
     print(f"Current input buffer: {current_input}")  # Debug print
+    for word in predefined_words:
+        if word in current_input:
+            on_word_detected(word)
+            typed_buffer.clear()
+            word_count = 0
+            return
     print(word_count)
-
     # Check if we reached 150 words without a trigger
     if word_count >= 150:
         print("Reached 150 words without trigger. Clearing buffer.")
         typed_buffer.clear()
         word_count = 0
-    else:
-        for word in predefined_words:
-            if word in current_input:
-                on_word_detected(word)
-                typed_buffer.clear()
-                word_count = 0
-                break
-
-# Function to handle key releases (not used here)
-def on_release(key):
-    pass
 
 # Function to monitor clipboard for predefined words
 def monitor_clipboard():
@@ -94,16 +87,66 @@ def monitor_clipboard():
                 # Add clipboard words to the buffer and count them
                 typed_buffer.extend(current_input)
                 word_count += len(current_input)
-        time.sleep(1)  # Check clipboard every second
+            # Check if we reached 150 words without a trigger
+            if word_count >= 150:
+                typed_buffer.clear()
+                word_count = 0
+
+        time.sleep(1)  # Check the clipboard every second
 
 # Function to monitor running applications
 def monitor_applications():
+    previous_apps = set()
     while True:
-        running_apps = [p.info['name'] for p in psutil.process_iter(['name'])]
-        for app in monitored_apps:
-            if app in running_apps:
+        running_apps = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
+        new_apps = running_apps - previous_apps
+        previous_apps = running_apps
+
+        for app in new_apps:
+            if app in monitored_apps:
                 on_word_detected(app)
+                typed_buffer.clear()
+                word_count = 0
+                break
+        else:
+            # Add new running apps to the buffer and count them
+            typed_buffer.extend(new_apps)
+            word_count += len(new_apps)
+
+            # Check if we reached 150 words without a trigger
+            if word_count >= 150:
+                typed_buffer.clear()
+                word_count = 0
+
         time.sleep(1)  # Check running applications every second
+
+# Initial setup: Add clipboard and running apps to buffer and check for predefined words
+def initial_setup():
+    global word_count
+
+    # Add clipboard content
+    clipboard_content = pyperclip.paste()
+    clipboard_words = clipboard_content.split()
+    typed_buffer.extend(clipboard_words)
+    word_count += len(clipboard_words)
+
+    # Add running applications
+    running_apps = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
+    typed_buffer.extend(running_apps)
+    word_count += len(running_apps)
+
+    # Check for predefined words
+    current_input = ''.join(typed_buffer).split()
+    for word in predefined_words + monitored_apps:
+        if word in current_input:
+            on_word_detected(word)
+            typed_buffer.clear()
+            word_count = 0
+            return
+
+    # Clear buffer and word count if no predefined words are detected
+    typed_buffer.clear()
+    word_count = 0
 
 # Start application monitoring in a separate thread
 app_monitor_thread = threading.Thread(target=monitor_applications)
@@ -115,5 +158,13 @@ clipboard_monitor_thread.start()
 
 # Setting up the keyboard listener
 print("Starting listener...")  # Debug print
-listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+listener = keyboard.Listener(on_press=on_press, on_release=lambda key: None)
 listener.start()
+# Run initial setup
+initial_setup()
+
+# Main loop to keep the script running
+try:
+    listener.join()
+except KeyboardInterrupt:
+    print("Shutting down...")
