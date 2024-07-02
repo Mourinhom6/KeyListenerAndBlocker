@@ -42,9 +42,7 @@ def on_press(key):
         print(f"Special key pressed: {key}")  # Debug print
         typed_buffer.append(' ')
         
-    check_buffer()
-    
-    # # Count words based on spaces
+    check_buffer(typed_buffer)    # # Count words based on spaces
     # if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
     #     word_count += 1
     
@@ -56,17 +54,18 @@ def on_press(key):
     #     word_count = 0
 
 # Function to check buffer for predefined words
-def check_buffer():
-    current_input
-    print(f"Current input buffer: {current_input}")  # Debug print
+def check_buffer(current_input):
     for word in predefined_words + monitored_apps:
         if word in current_input:
             on_word_detected(word)
             typed_buffer.clear()
-            return
+            word_count = 0
+            return True
+    return False
 # Function to monitor clipboard for predefined words
 def monitor_clipboard():
     global word_count
+    print("CLIPMON COUNT",word_count)
     previous_text = ""
     while True:
         current_text = pyperclip.paste()
@@ -75,15 +74,11 @@ def monitor_clipboard():
             print(f"Clipboard content: {current_text}")  # Debug print
             print(word_count)
             current_input = current_text.split()
-            for word in current_input:
-                if word in predefined_words:
-                    on_word_detected(word)
-                    typed_buffer.clear()
-                    word_count = 0
-                    break
-            else:
+            print("BUFFER CLIMON ",typed_buffer)
+            if not check_buffer(current_input):
                 # Add clipboard words to the buffer and count them
                 typed_buffer.extend(current_input)
+                print("BUFFER CLIMON ND",typed_buffer)
                 word_count += len(current_input)
             # Check if we reached 150 words without a trigger
             if word_count >= 150:
@@ -94,30 +89,25 @@ def monitor_clipboard():
 
 # Function to monitor running applications
 def monitor_applications():
+    global word_count
+    print("APPMON COUNT",word_count)
     previous_apps = set()
     while True:
         running_apps = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
         new_apps = running_apps - previous_apps
         previous_apps = running_apps
-
-        for app in new_apps:
-            if app in monitored_apps:
-                on_word_detected(app)
-                typed_buffer.clear()
-                word_count = 0
-                break
-        else:
+        print("BUFFER APPMON ",typed_buffer)
+        if not check_buffer(new_apps):
             # Add new running apps to the buffer and count them
             typed_buffer.extend(new_apps)
+            print("BUFFER APPMON ND",typed_buffer)
             word_count += len(new_apps)
-
             # Check if we reached 150 words without a trigger
             if word_count >= 150:
                 typed_buffer.clear()
                 word_count = 0
 
         time.sleep(1)  # Check running applications every second
-
 # Initial setup: Add clipboard and running apps to buffer and check for predefined words
 def initial_setup():
     global word_count
@@ -146,25 +136,21 @@ def initial_setup():
 
     # Check for predefined words
     current_input = ''.join(typed_buffer).split()
-    for word in predefined_words + monitored_apps:
-        if word in current_input:
-            on_word_detected(word)
-            typed_buffer.clear()
-            word_count = 0
-            return
-
+    if check_buffer(current_input):
+        return
     # Clear buffer and word count if no predefined words are detected
     typed_buffer.clear()
     word_count = 0
+    print("ND  BUFFER")
+    print(typed_buffer)
+    print("ND COUNT",word_count)
+    # Start application monitoring in a separate thread
+    app_monitor_thread = threading.Thread(target=monitor_applications)
+    app_monitor_thread.start()
 
-# Start application monitoring in a separate thread
-app_monitor_thread = threading.Thread(target=monitor_applications)
-app_monitor_thread.start()
-
-# Start clipboard monitoring in a separate thread
-clipboard_monitor_thread = threading.Thread(target=monitor_clipboard)
-clipboard_monitor_thread.start()
-
+    # Start clipboard monitoring in a separate thread
+    clipboard_monitor_thread = threading.Thread(target=monitor_clipboard)
+    clipboard_monitor_thread.start()
 # Setting up the keyboard listener
 print("Starting listener...")  # Debug print
 listener = keyboard.Listener(on_press=on_press, on_release=lambda key: None)
