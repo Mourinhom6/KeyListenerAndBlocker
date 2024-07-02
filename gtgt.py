@@ -7,15 +7,11 @@ from datetime import datetime
 import threading
 import psutil
 
-# List of predefined words to detect
-predefined_words = ['shutdownnow', 'poweroff', 'terminate']
-
-# Buffer to store typed characters and word count
-typed_buffer = []
+#Variables defenied
+predefined_words = ['shutdownnow', 'poweroff', 'terminate']# List of predefined words to detect
+typed_buffer = []# Buffer to store typed characters and word count
+monitored_apps = ['Facebook', 'Messenger']# List of applications to monitor (without '.exe')
 word_count = 0
-
-# List of applications to monitor (without '.exe')
-monitored_apps = ['Facebook', 'Messenger']
 
 # Function to simulate shutdown (for testing)
 def shutdown_computer():
@@ -45,27 +41,29 @@ def on_press(key):
     except AttributeError:
         print(f"Special key pressed: {key}")  # Debug print
         typed_buffer.append(' ')
+        
+    check_buffer()
+    
+    # # Count words based on spaces
+    # if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
+    #     word_count += 1
+    
+    # print(word_count)
+    # # Check if we reached 150 words without a trigger
+    # if word_count >= 150:
+    #     print("Reached 150 words without trigger. Clearing buffer.")
+    #     typed_buffer.clear()
+    #     word_count = 0
 
-    # Count words based on spaces
-    if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
-        word_count += 1
-
-    # Check if buffer ends with any predefined word
-    current_input = ''.join(typed_buffer).split()
+# Function to check buffer for predefined words
+def check_buffer():
+    current_input
     print(f"Current input buffer: {current_input}")  # Debug print
-    for word in predefined_words:
+    for word in predefined_words + monitored_apps:
         if word in current_input:
             on_word_detected(word)
             typed_buffer.clear()
-            word_count = 0
             return
-    print(word_count)
-    # Check if we reached 150 words without a trigger
-    if word_count >= 150:
-        print("Reached 150 words without trigger. Clearing buffer.")
-        typed_buffer.clear()
-        word_count = 0
-
 # Function to monitor clipboard for predefined words
 def monitor_clipboard():
     global word_count
@@ -123,17 +121,28 @@ def monitor_applications():
 # Initial setup: Add clipboard and running apps to buffer and check for predefined words
 def initial_setup():
     global word_count
-
+    print("First round of logs")
     # Add clipboard content
     clipboard_content = pyperclip.paste()
     clipboard_words = clipboard_content.split()
+    print("IN  CLIPBOARD")
+    print(clipboard_words)
+    print("IN  BUFFER")
+    print(typed_buffer)
+    print("IN COUNT",word_count)
     typed_buffer.extend(clipboard_words)
+    print("BUFFER + CLIPBOARD ST",typed_buffer)
     word_count += len(clipboard_words)
+    print("COUNT + CLIPBOARD ST",word_count)
 
     # Add running applications
     running_apps = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
+    print("IN  RUNAPPS")
+    print(running_apps)
     typed_buffer.extend(running_apps)
+    print("BUFFER + CLIPBOARD ST + RUNAPPS ST",typed_buffer)
     word_count += len(running_apps)
+    print("COUNT + CLIPBOARD ST + RUNAPPS ST",word_count)
 
     # Check for predefined words
     current_input = ''.join(typed_buffer).split()
