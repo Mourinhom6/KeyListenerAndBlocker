@@ -13,6 +13,8 @@ typed_buffer = []# Buffer to store typed characters and word count
 monitored_apps = ['Facebook', 'Messenger']# List of applications to monitor (without '.exe')
 word_count = 0
 
+initial_apps = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
+
 # Function to simulate shutdown (for testing)
 def shutdown_computer():
     print("On hold for real version.")
@@ -45,13 +47,12 @@ def on_press(key):
     check_buffer(typed_buffer)    # # Count words based on spaces
     # if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
     #     word_count += 1
-    
-    # print(word_count)
-    # # Check if we reached 150 words without a trigger
-    # if word_count >= 150:
-    #     print("Reached 150 words without trigger. Clearing buffer.")
-    #     typed_buffer.clear()
-    #     word_count = 0
+    # Check if we reached 150 words without a trigger
+    if word_count >= 150:
+        print("Reached 150 words without trigger. Clearing buffer.")
+        typed_buffer.clear()
+        word_count = 0
+    print(word_count)
 
 # Function to check buffer for predefined words
 def check_buffer(current_input):
@@ -81,32 +82,27 @@ def monitor_clipboard():
                 print("BUFFER CLIMON ND",typed_buffer)
                 word_count += len(current_input)
             # Check if we reached 150 words without a trigger
-            if word_count >= 150:
-                typed_buffer.clear()
-                word_count = 0
 
         time.sleep(1)  # Check the clipboard every second
 
 # Function to monitor running applications
 def monitor_applications():
     global word_count
+    global initial_apps
     print("APPMON COUNT",word_count)
-    previous_apps = set()
+    print("APPMON INITILaPPS",initial_apps)
     while True:
-        running_apps = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
-        new_apps = running_apps - previous_apps
-        previous_apps = running_apps
-        print("BUFFER APPMON ",typed_buffer)
-        if not check_buffer(new_apps):
-            # Add new running apps to the buffer and count them
-            typed_buffer.extend(new_apps)
-            print("BUFFER APPMON ND",typed_buffer)
-            word_count += len(new_apps)
-            # Check if we reached 150 words without a trigger
-            if word_count >= 150:
-                typed_buffer.clear()
-                word_count = 0
-
+        new_apps  = set(p.info['name'].replace('.exe', '') for p in psutil.process_iter(['name']))
+        # print("BUFFER APPMON ",typed_buffer)
+        for wordo in new_apps:
+            if wordo not in initial_apps:
+                if not check_buffer(wordo):
+                    print("NEW WORD",wordo)
+                    # Add new running apps to the buffer and count them
+                    typed_buffer.extend(wordo)
+                    # print("BUFFER APPMON ND",typed_buffer)
+                    word_count += 1
+                    # Check if we reached 150 words without a trigger
         time.sleep(1)  # Check running applications every second
 # Initial setup: Add clipboard and running apps to buffer and check for predefined words
 def initial_setup():

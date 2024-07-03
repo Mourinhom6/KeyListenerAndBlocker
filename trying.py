@@ -30,11 +30,9 @@ def on_word_detected(word):
         file.write(message)
     print("Shutdown command detected and simulated.")
     shutdown_computer()
-
 # Function to handle key presses
 def on_press(key):
     global word_count
-
     # Debug print
     print(f"Key pressed: {key}")
     try:
@@ -46,13 +44,14 @@ def on_press(key):
         print(f"Special key pressed: {key}")  # Debug print
         typed_buffer.append(' ')
 
-    # Count words based on spaces
-    if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
-        word_count += 1
+    # # Count words based on spaces
+    # if len(typed_buffer) > 1 and typed_buffer[-1] == ' ' and typed_buffer[-2] != ' ':
+    #     word_count += 1
 
-    # Check if buffer ends with any predefined word
-    current_input = ''.join(typed_buffer).split()
-    print(f"Current input buffer: {current_input}")  # Debug print
+    # # Check if buffer ends with any predefined word
+    # current_input = ''.join(typed_buffer).split()
+    #print(f"Current_input : {current_input}")  # Debug print
+    print(f" buffer: {typed_buffer}")  # Debug print
     print(word_count)
     # Check if we reached 150 words without a trigger
     if word_count >= 150:
