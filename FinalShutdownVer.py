@@ -1,11 +1,16 @@
-import pyperclip
+from datetime import datetime
+import os
+import sys
 import time
+import platform
+import threading
+custom_path = os.getenv('PYTHONSCRIPTPATH') # Get the custom path from the environment variable
+if custom_path and custom_path not in sys.path: # Add the custom path to the system path if it exists
+    sys.path.append(custom_path)
+    
 from pynput import keyboard
 from pynput.keyboard import Key
-import os
-import platform
-from datetime import datetime
-import threading
+import pyperclip
 import psutil
 
 #Variables defenied
@@ -36,7 +41,8 @@ def on_word_detected(word):
     print(f"Detected word: {word}")
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     message = f"{current_datetime} - Shutdown command detected and simulated. Triggered by: {word}\n"
-    with open('shutdown_test.log', 'a') as file: 
+    log_file_path = 'C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\shutdown_test.log'  #Trigger log file
+    with open(log_file_path, 'a') as file: 
         file.write(message)
     print("Shutdown command detected and simulated.")
     shutdown_computer()
