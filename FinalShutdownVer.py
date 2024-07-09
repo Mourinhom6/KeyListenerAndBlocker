@@ -14,9 +14,9 @@ import pyperclip
 import psutil
 
 #Variables defenied
-predefined_words = ['shutdownnow', 'poweroff', 'terminate']# List of predefined words to detect
+predefined_words = ['shutdownnow', 'poweroff', 'terminate'] # List of predefined words to detect
 predefined_words = [word.lower() for word in predefined_words]
-monitored_apps = ['Facebook', 'Messenger']# List of applications to monitor (without '.exe')
+monitored_apps = ['Facebook', 'Messenger']  # List of applications to monitor (without '.exe')
 monitored_apps= [app.lower() for app in monitored_apps]
 typed_buffer = []# Buffer to store typed characters and word count
 word_count = 0
@@ -41,7 +41,7 @@ def on_word_detected(word):
     print(f"Detected word: {word}")
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     message = f"{current_datetime} - Shutdown command detected and simulated. Triggered by: {word}\n"
-    log_file_path = 'C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\shutdown_test.log'  #Trigger log file
+    log_file_path = 'C:\\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\shutdown_test.log'  #Trigger log file
     with open(log_file_path, 'a') as file: 
         file.write(message)
     print("Shutdown command detected and simulated.")
