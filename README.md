@@ -51,13 +51,13 @@ You can install the required libraries using pip:
 
 ## Setup
 
+**Run the code manually:**
+
 - Clone the repository or download the script file.
 
 - Ensure the script has the necessary permissions to run (especially for clipboard and process monitoring).
 
 - Running the Script
-
-**Run the code manually:**
 
  ```sh
    python path/to/your_script.py
@@ -70,12 +70,38 @@ You can install the required libraries using pip:
 1. Create a batch file named run_script.bat with the following content:
 
  ```sh
-   @echo off
-   python path\to\your_script.py
-   pause
+@echo off
+set PYTHONSCRIPTPATH=C:\Users\Utilizador\Desktop\CODE\Lib\site-packages
+set PYTHONPATH=%PYTHONSCRIPTPATH%
+
+REM Ensure the paths are correct
+echo PYTHONSCRIPTPATH: %PYTHONSCRIPTPATH%
+echo PYTHONPATH: %PYTHONPATH%
+
+REM Check if Python script exists
+if exist C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\FinalShutdownVer.py (
+    echo Python script found.
+) else (
+    echo Python script not found. > C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\logfile.txt
+    pause
+    exit /b
+)
+
+REM Start the Python script and log errors
+:START
+python C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\FinalShutdownVer.py > C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\logfile.txt 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    echo %DATE% %TIME% - Script crashed with exit code %ERRORLEVEL%. >> C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\logfile.txt
+    echo Restarting... >> C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\logfile.txt
+    goto START
+)
+pause
    ```
 
-2. Copy the batch file to the startup folder:
+2. **'Note:'** Make sure to change the paths in the batch file according to the location of your script and log files. For example, if your script is located at **''C:\path\to\your_script.py''** and your log file should be at **''C:\path\to\logfile.txt''**, update the paths accordingly.
+
+
+3. Copy the batch file to the startup folder:
 
 Press **'Win + R'**, type **'shell:startup'**, and press Enter.
 
@@ -86,8 +112,32 @@ Paste your **'run_script.bat'** file in the startup folder.
 1. Create a shell script named **'run_script.bat'** with the following content:
 
  ```sh
-    #!/bin/bash
-   python path/to/your_script.py
+   #!/bin/bash
+export PYTHONSCRIPTPATH=/home/user/Desktop/CODE/Lib/site-packages
+export PYTHONPATH=$PYTHONSCRIPTPATH
+
+log_file="/home/user/Desktop/codePY/KeyListenerAndBlocker/logfile.txt"
+script_path="/home/user/Desktop/codePY/KeyListenerAndBlocker/FinalShutdownVer.py"
+
+echo "PYTHONSCRIPTPATH: $PYTHONSCRIPTPATH"
+echo "PYTHONPATH: $PYTHONPATH"
+
+if [ -f "$script_path" ]; then
+    echo "Python script found."
+else
+    echo "Python script not found." > $log_file
+    exit 1
+fi
+
+while true; do
+    python3 $script_path >> $log_file 2>&1
+    if [ $? -ne 0 ]; then
+        echo "$(date) - Script crashed with exit code $?." >> $log_file
+        echo "Restarting..." >> $log_file
+    fi
+    sleep 1
+done
+
    ```
 
 2. Make the script executable:
@@ -100,15 +150,39 @@ Paste your **'run_script.bat'** file in the startup folder.
 
 Use the **'Startup Applications'** GUI tool or add it to **'~/.config/autostart'**.
 
-Optionally, create a systemd service for reliability.
+**'Optionally, create a systemd service for reliability.'**
 
 **MacOS**
 
 1. Create a shell script named **'run_script.sh'**:
 
  ```sh
-   #!/bin/bash
-   python3 /path/to/your_script.pyy
+  #!/bin/bash
+export PYTHONSCRIPTPATH=/Users/yourusername/Desktop/CODE/Lib/site-packages
+export PYTHONPATH=$PYTHONSCRIPTPATH
+
+log_file="/Users/yourusername/Desktop/codePY/KeyListenerAndBlocker/logfile.txt"
+script_path="/Users/yourusername/Desktop/codePY/KeyListenerAndBlocker/FinalShutdownVer.py"
+
+echo "PYTHONSCRIPTPATH: $PYTHONSCRIPTPATH"
+echo "PYTHONPATH: $PYTHONPATH"
+
+if [ -f "$script_path" ]; then
+    echo "Python script found."
+else
+    echo "Python script not found." > $log_file
+    exit 1
+fi
+
+while true; do
+    python3 $script_path >> $log_file 2>&1
+    if [ $? -ne 0 ]; then
+        echo "$(date) - Script crashed with exit code $?." >> $log_file
+        echo "Restarting..." >> $log_file
+    fi
+    sleep 1
+done
+
    ```
 
 2. Add the script to your startup items:
