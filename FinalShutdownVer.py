@@ -12,13 +12,14 @@ from pynput import keyboard
 from pynput.keyboard import Key
 import pyperclip
 import psutil
+from difflib import SequenceMatcher
 
-#Variables defenied
+#Variables defined
 predefined_words = ['shutdownnow', 'poweroff', 'terminate'] # List of predefined words to detect
 predefined_words = [word.lower() for word in predefined_words]
 monitored_apps = ['Facebook', 'Messenger']  # List of applications to monitor (without '.exe')
-monitored_apps= [app.lower() for app in monitored_apps]
-typed_buffer = []# Buffer to store typed characters and word count
+monitored_apps = [app.lower() for app in monitored_apps]
+typed_buffer = []  # Buffer to store typed characters and word count
 word_count = 0
 tmpword = ""  # Temporary variable to accumulate characters
 
@@ -41,8 +42,8 @@ def on_word_detected(word):
     print(f"Detected word: {word}")
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     message = f"{current_datetime} - Shutdown command detected and simulated. Triggered by: {word}\n"
-    log_file_path = 'C:\\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\shutdown_test.log'  #Trigger log file
-    with open(log_file_path, 'a') as file: 
+    log_file_path = r'C:\Users\Utilizador\Desktop\codePY\KeyListenerAndBlocker\shutdown_test.log'
+    with open(log_file_path, 'a') as file:
         file.write(message)
     print("Shutdown command detected and simulated.")
     shutdown_computer()
@@ -100,13 +101,17 @@ def on_press(key):
         typed_buffer.clear()
         word_count = 0
     print(word_count)
-    
-# Function to check buffer for predefined words
+
+# Function to calculate the similarity ratio between two words
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+# Function to check buffer for predefined words or near matches
 def check_buffer(current_input):
     global word_count  # Declare word_count as global to modify it
     for word in predefined_words + monitored_apps:
         for input_word in current_input:
-            if word in input_word:
+            if word in input_word or similar(word, input_word) > 0.8:
                 on_word_detected(word)
                 typed_buffer.clear()
                 word_count = 0

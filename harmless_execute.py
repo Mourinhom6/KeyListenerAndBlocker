@@ -1,4 +1,6 @@
 from pynput import keyboard
+from pynput.mouse import Button, Controller
+from pynput import keyboard
 
 # List of predefined words to detect
 predefined_words = ['shutdownnow', 'poweroff', 'terminate']
@@ -25,7 +27,6 @@ with keyboard.Listener(
         on_press=on_press,
         on_release=on_release) as listener:
     listener.join()
-from pynput.mouse import Button, Controller
 
 mouse = Controller()
 
@@ -42,7 +43,6 @@ mouse.click(Button.left, 1)
 # Scroll down
 mouse.scroll(0, -2)
 
-from pynput import keyboard
 
 
 
